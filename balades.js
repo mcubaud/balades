@@ -212,9 +212,9 @@ function couleur_par_score(pts){
     return rgbToHex(Math.floor(255-2.55*pts),Math.floor(2.55*pts),0);
 }
 
-/*document.getElementById("localize").onclick=function(){
+document.getElementById("localize").onclick=function(){
     mymap.locate({setView: true, maxZoom: 16});
-}*/
+}
 
 function onLocationFound(e) {
     var radius = e.accuracy;
