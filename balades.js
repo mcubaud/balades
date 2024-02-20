@@ -38,6 +38,15 @@ promise
             <p>${obj.properties.Date}</p>
             <p>${obj.properties.Longueur}</p>
             `)
+            polyline.onclick = function(){
+                for (let i=256; i>=0; i-=16){
+                    setTimeout(function(){
+                      let color_i = '#'+componentToHex(i)+'0000';
+                      console.log(color_i);
+                        polyline.setStyle({color: color_i});
+                  }, (256-i)/16*100)
+                }
+            }
         }finally{
 
         }
@@ -232,5 +241,4 @@ function onLocationError(e) {
 }
 
 mymap.on('locationerror', onLocationError);
-
 
