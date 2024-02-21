@@ -39,13 +39,7 @@ promise
             <p>${obj.properties.Longueur}</p>
             `)
             polyline.onclick = function(){
-                for (let i=256; i>=0; i-=16){
-                    setTimeout(function(){
-                      let color_i = '#'+componentToHex(i)+'0000';
-                      console.log(color_i);
-                        polyline.setStyle({color: color_i});
-                  }, (256-i)/16*100)
-                }
+                fade(polyline, 256)
             }
         }finally{
 
@@ -53,6 +47,15 @@ promise
         
     }
 })
+
+function fade(polyline, i){
+    if(i>0){
+        let color_i = '#'+componentToHex(i)+'0000';
+        console.log(color_i);
+        polyline.setStyle({color: color_i});
+        setTimeout(fade, 100, [polyline, i-16])
+    }
+}
 
 var promise1 = new Promise((resolve, reject) => {
     fetch("rues_prises.geojson")
