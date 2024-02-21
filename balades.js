@@ -38,9 +38,10 @@ promise
             <p>${obj.properties.Date}</p>
             <p>${obj.properties.Longueur}</p>
             `)
-            polyline.onclick = function(){
-                fade(polyline, 256)
-            }
+            polyline.addEventListener("click", function(){
+                polyline.openPopup();
+                fade(polyline, 256);
+            })
         }finally{
 
         }
@@ -53,7 +54,7 @@ function fade(polyline, i){
         let color_i = '#'+componentToHex(i)+'0000';
         console.log(color_i);
         polyline.setStyle({color: color_i});
-        setTimeout(fade, 100, [polyline, i-16])
+        setTimeout(x=>{fade(polyline, i-16)}, 100)
     }
 }
 
@@ -78,7 +79,10 @@ promise2
         lnglats = obj.geometry.coordinates;
         latlngs = lnglats.map(x => [x[1],x[0]])
         try{
-            L.polyline(latlngs, {color: 'black'}).addTo(mymap);
+            var polyline = L.polyline(latlngs, {color: 'black'}).addTo(mymap);
+            polyline.addEventListener("click", function(){
+                fade(polyline, 256);
+            })
         }finally{
 
         }
@@ -224,12 +228,10 @@ function couleur_par_score(pts){
     return rgbToHex(Math.floor(255-2.55*pts),Math.floor(2.55*pts),0);
 }
 
-document.getElementById("localize").onclick=function(){
-    mymap.locate({setView: true, maxZoom: 16});
-}
 
 function onLocationFound(e) {
     var radius = e.accuracy;
+    console.log(e)
 
     L.marker(e.latlng).addTo(mymap)
         .bindPopup("You are within " + radius + " meters from this point").openPopup();
@@ -244,4 +246,8 @@ function onLocationError(e) {
 }
 
 mymap.on('locationerror', onLocationError);
+
+document.getElementById("localize").onclick=function(){
+    mymap.locate({setView: true, maxZoom: 16});
+}
 
