@@ -25,7 +25,7 @@ var promise0 = new Promise((resolve, reject) => {
 var promise = promise0;
 promise
 .then(r => {
-    var array = r.features
+    array = r.features
     for(var i=0; i<array.length;i++){
         var obj = array[i];
         console.log(obj);
@@ -38,7 +38,8 @@ promise
             <p>${obj.properties.Date}</p>
             <p>${obj.properties.Longueur}</p>
             `)
-            polyline.addEventListener("click", function(){
+            polyline.addEventListener("click", function(e){
+                console.log(e);
                 polyline.openPopup();
                 fade(polyline, 256);
             })
