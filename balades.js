@@ -22,6 +22,7 @@ var promise0 = new Promise((resolve, reject) => {
         resolve(r);
     })
 });
+var target;
 var promise = promise0;
 promise
 .then(r => {
@@ -40,8 +41,10 @@ promise
             `)
             polyline.addEventListener("click", function(e){
                 console.log(e);
+                target = e.target;
                 polyline.openPopup();
                 fade(polyline, 256);
+                target.openPopup();
             })
         }finally{
 
