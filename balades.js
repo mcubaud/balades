@@ -40,10 +40,8 @@ promise
             <p>${obj.properties.Longueur}</p>
             `)
             polyline.addEventListener("click", function(e){
-                console.log(e);
                 target = e.target;
-                polyline.openPopup();
-                fade(polyline, 256);
+                fade(target, 256);
                 target.openPopup();
             })
         }finally{
@@ -84,8 +82,9 @@ promise2
         latlngs = lnglats.map(x => [x[1],x[0]])
         try{
             var polyline = L.polyline(latlngs, {color: 'black'}).addTo(mymap);
-            polyline.addEventListener("click", function(){
-                fade(polyline, 256);
+            polyline.addEventListener("click", function(e){
+                target = e.target;
+                fade(target, 256);
             })
         }finally{
 
