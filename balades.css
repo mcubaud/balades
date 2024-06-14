@@ -309,8 +309,8 @@ canvas{
     padding: 2px;
 }
 
-#localize{
-    background-image: url("loc.png");
+.buttons_locality{
+    
     width: 30px;
     height: 30px;
     background-position: center;
@@ -319,7 +319,15 @@ canvas{
     margin: 2px;
     padding: 2px;
 }
-
+#localize{
+    background-image: url("loc.png");
+}
+#lyon{
+    background-image: url("https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Blason_Ville_fr_Lyon.svg/150px-Blason_Ville_fr_Lyon.svg.png");
+}
+#paris{
+    background-image: url("https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/Blason_paris_75.svg/245px-Blason_paris_75.svg.png");
+}
 
 #choix_affichage{
     display: flex;

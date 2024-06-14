@@ -136,6 +136,12 @@ function couleur_aleatoire() {
 document.getElementById("localize").onclick=function(){
     mymap.locate({setView: true, maxZoom: 16});
 }
+document.getElementById("lyon").onclick=function(){
+    mymap.setView([45.7578137, 4.8320114], 11);
+}
+document.getElementById("paris").onclick=function(){
+    mymap.setView([48.8534951, 2.3483915], 12);
+}
 
 /*
 
