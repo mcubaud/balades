@@ -133,6 +133,9 @@ function couleur_aleatoire() {
     return color;
 }  
 
+document.getElementById("localize").onclick=function(){
+    mymap.locate({setView: true, maxZoom: 16});
+}
 
 /*
 
@@ -250,7 +253,5 @@ function onLocationError(e) {
 
 mymap.on('locationerror', onLocationError);
 
-document.getElementById("localize").onclick=function(){
-    mymap.locate({setView: true, maxZoom: 16});
-}
+
 
