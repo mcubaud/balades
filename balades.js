@@ -254,12 +254,7 @@ fetch("grs-de-france.geojson")
     })
     .then(data => {
         grLayer.addData(data);
-        
-        // Vérification de l'interrupteur HTML manuel "switch-gr" au démarrage si existant
-        var switchGr = document.getElementById("switch-gr");
-        if (switchGr && switchGr.checked) {
-            grLayer.addTo(mymap);
-        }
+
     })
     .catch(error => {
         console.error("Erreur lors du chargement des GR :", error);
