@@ -263,22 +263,73 @@ mymap.on('locationerror', onLocationError);
 mymap.createPane('grPane');
 // 2. On le place à 350 (le fond de carte est à 200, et vos autres polylines à 400)
 mymap.getPane('grPane').style.zIndex = 350;
-// 3. Astuce : on désactive les clics sur ce volet pour que les GR ne bloquent pas le clic sur vos balades
-mymap.getPane('grPane').style.pointerEvents = 'none';
 
 
-// 1. Initialisation d'une couche GeoJSON Leaflet vide pour les GR
-// On lui applique une couleur rouge unie, typique des sentiers de Grande Randonnée
+
 var grLayer = L.geoJSON(null, {
     pane: 'grPane',
     style: {
         color: '#e60000',
         weight: 3,
         opacity: 0.85
+    },
+    onEachFeature: function(feature, layer) {
+        // Si la propriété "name" existe, on lie un Popup
+        if (feature.properties && feature.properties.name) {
+            layer.bindPopup(`<strong>${feature.properties.name}</strong>`);
+        }
     }
 });
 
-// 2. Chargement asynchrone du fichier grs-de-france.geojson
+// Référence pour savoir si le texte est actuellement dessiné
+var labelsDisplayed = false;
+
+// Fonction pour gérer l'affichage du texte le long des lignes selon le niveau de zoom
+function updateGrLabels() {
+    var currentZoom = mymap.getZoom();
+    
+    // On n'affiche le texte que si la couche est visible à l'écran ET à partir du zoom 11 (ajustable)
+    if (mymap.hasLayer(grLayer) && currentZoom >= 11) {
+        if (!labelsDisplayed) {
+            grLayer.eachLayer(function(layer) {
+                if (layer.feature && layer.feature.properties && layer.feature.properties.code_gr) {
+                    // On dessine le texte le long de la ligne
+                    layer.setText(layer.feature.properties.code_gr, {
+                        repeat: true,        // Répéter le texte le long du sentier
+                        offset: -8,          // Décalage vertical au-dessus de la ligne
+                        attributes: { 
+                            fill: '#e60000', // Couleur du texte assortie au GR
+                            'font-weight': 'bold',
+                            'font-size': '12px'
+                        }
+                    });
+                }
+            });
+            labelsDisplayed = true;
+        }
+    } else {
+        // Si on zoom arrière ou si la couche est masquée, on retire le texte
+        if (labelsDisplayed) {
+            grLayer.eachLayer(function(layer) {
+                layer.setText(null);
+            });
+            labelsDisplayed = false;
+        }
+    }
+}
+
+// 2. Événements cartographiques pour recalculer l'affichage du texte
+mymap.on('zoomend', updateGrLabels);
+mymap.on('layeradd', function(e) {
+    if (e.layer === grLayer) updateGrLabels();
+});
+mymap.on('layerremove', function(e) {
+    if (e.layer === grLayer) {
+        labelsDisplayed = false; // Réinitialise l'état si décoché
+    }
+});
+
+// 3. Chargement asynchrone du fichier GeoJSON
 fetch("grs-de-france.geojson")
     .then(response => {
         if (!response.ok) {
@@ -287,11 +338,11 @@ fetch("grs-de-france.geojson")
         return response.json();
     })
     .then(data => {
-        // Injection des données géographiques dans notre couche
         grLayer.addData(data);
         
-        // Vérification de sécurité au cas où l'utilisateur clique avant la fin du chargement
-        if (document.getElementById("switch-gr").checked) {
+        // Vérification de l'interrupteur HTML manuel "switch-gr" au démarrage si existant
+        var switchGr = document.getElementById("switch-gr");
+        if (switchGr && switchGr.checked) {
             grLayer.addTo(mymap);
         }
     })
