@@ -257,12 +257,15 @@ function updateGrLabels() {
                 if (layer.feature && layer.feature.properties && layer.feature.properties.code_gr) {
                     // On dessine le texte le long de la ligne
                     layer.setText(layer.feature.properties.code_gr, {
-                        repeat: true,        // Répéter le texte le long du sentier
-                        offset: -8,          // Décalage vertical au-dessus de la ligne
+                        repeat: false,       // 1. On désactive la répétition automatique bête par segment
+                        center: true,        // 2. On centre le texte au milieu de la ligne globale
+                        offset: -10,         // 3. On l'éloigne légèrement de la ligne pour ne pas qu'il la touche
+                        orientation: 'flip', // 4. TRÈS IMPORTANT : retourne automatiquement le texte pour qu'il soit toujours lisible de gauche à droite
                         attributes: { 
-                            fill: '#e60000', // Couleur du texte assortie au GR
+                            fill: '#e60000', 
                             'font-weight': 'bold',
-                            'font-size': '12px'
+                            'font-size': '13px',
+                            'letter-spacing': '2px' // 5. Un peu d'espacement entre les lettres pour la clarté
                         }
                     });
                 }
