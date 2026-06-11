@@ -260,7 +260,7 @@ function updateGrLabels() {
                         repeat: false,       // 1. On désactive la répétition automatique bête par segment
                         center: true,        // 2. On centre le texte au milieu de la ligne globale
                         offset: -10,         // 3. On l'éloigne légèrement de la ligne pour ne pas qu'il la touche
-                        orientation: 'flip', // 4. TRÈS IMPORTANT : retourne automatiquement le texte pour qu'il soit toujours lisible de gauche à droite
+                        orientation: 0, // 4. TRÈS IMPORTANT : retourne automatiquement le texte pour qu'il soit toujours lisible de gauche à droite
                         attributes: { 
                             fill: '#e60000', 
                             'font-weight': 'bold',
