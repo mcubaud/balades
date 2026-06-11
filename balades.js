@@ -259,9 +259,18 @@ function onLocationError(e) {
 
 mymap.on('locationerror', onLocationError);
 
+// 1. Création d'un volet d'affichage dédié aux GR
+mymap.createPane('grPane');
+// 2. On le place à 350 (le fond de carte est à 200, et vos autres polylines à 400)
+mymap.getPane('grPane').style.zIndex = 350;
+// 3. Astuce : on désactive les clics sur ce volet pour que les GR ne bloquent pas le clic sur vos balades
+mymap.getPane('grPane').style.pointerEvents = 'none';
+
+
 // 1. Initialisation d'une couche GeoJSON Leaflet vide pour les GR
 // On lui applique une couleur rouge unie, typique des sentiers de Grande Randonnée
 var grLayer = L.geoJSON(null, {
+    pane: 'grPane',
     style: {
         color: '#e60000',
         weight: 3,
