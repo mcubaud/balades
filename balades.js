@@ -243,56 +243,6 @@ var grLayer = L.geoJSON(null, {
     }
 });
 
-// Référence pour savoir si le texte est actuellement dessiné
-var labelsDisplayed = false;
-
-// Fonction pour gérer l'affichage du texte le long des lignes selon le niveau de zoom
-function updateGrLabels() {
-    var currentZoom = mymap.getZoom();
-    
-    // On n'affiche le texte que si la couche est visible à l'écran ET à partir du zoom 11 (ajustable)
-    if (mymap.hasLayer(grLayer) && currentZoom >= 11) {
-        if (!labelsDisplayed) {
-            grLayer.eachLayer(function(layer) {
-                if (layer.feature && layer.feature.properties && layer.feature.properties.code_gr) {
-                    // On dessine le texte le long de la ligne
-                    layer.setText(layer.feature.properties.code_gr, {
-                        repeat: false,       // 1. On désactive la répétition automatique bête par segment
-                        center: true,        // 2. On centre le texte au milieu de la ligne globale
-                        offset: -10,         // 3. On l'éloigne légèrement de la ligne pour ne pas qu'il la touche
-                        orientation: 0, // 4. TRÈS IMPORTANT : retourne automatiquement le texte pour qu'il soit toujours lisible de gauche à droite
-                        attributes: { 
-                            fill: '#e60000', 
-                            'font-weight': 'bold',
-                            'font-size': '13px',
-                            'letter-spacing': '2px' // 5. Un peu d'espacement entre les lettres pour la clarté
-                        }
-                    });
-                }
-            });
-            labelsDisplayed = true;
-        }
-    } else {
-        // Si on zoom arrière ou si la couche est masquée, on retire le texte
-        if (labelsDisplayed) {
-            grLayer.eachLayer(function(layer) {
-                layer.setText(null);
-            });
-            labelsDisplayed = false;
-        }
-    }
-}
-
-// 2. Événements cartographiques pour recalculer l'affichage du texte
-mymap.on('zoomend', updateGrLabels);
-mymap.on('layeradd', function(e) {
-    if (e.layer === grLayer) updateGrLabels();
-});
-mymap.on('layerremove', function(e) {
-    if (e.layer === grLayer) {
-        labelsDisplayed = false; // Réinitialise l'état si décoché
-    }
-});
 
 // 3. Chargement asynchrone du fichier GeoJSON
 fetch("grs-de-france.geojson")
