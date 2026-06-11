@@ -259,5 +259,45 @@ function onLocationError(e) {
 
 mymap.on('locationerror', onLocationError);
 
+// 1. Initialisation d'une couche GeoJSON Leaflet vide pour les GR
+// On lui applique une couleur rouge unie, typique des sentiers de Grande Randonnée
+var grLayer = L.geoJSON(null, {
+    style: {
+        color: '#e60000',
+        weight: 3,
+        opacity: 0.85
+    }
+});
 
+// 2. Chargement asynchrone du fichier grs-de-france.geojson
+fetch("grs-de-france.geojson")
+    .then(response => {
+        if (!response.ok) {
+            throw new Error("Impossible de récupérer le fichier grs-de-france.geojson");
+        }
+        return response.json();
+    })
+    .then(data => {
+        // Injection des données géographiques dans notre couche
+        grLayer.addData(data);
+        
+        // Vérification de sécurité au cas où l'utilisateur clique avant la fin du chargement
+        if (document.getElementById("switch-gr").checked) {
+            grLayer.addTo(mymap);
+        }
+    })
+    .catch(error => {
+        console.error("Erreur lors du chargement des GR :", error);
+    });
+
+// 3. Gestionnaire d'événement sur le Switch (Checkbox)
+document.getElementById("switch-gr").addEventListener("change", function(e) {
+    if (this.checked) {
+        // Si la case est cochée, on affiche la couche sur la carte
+        mymap.addLayer(grLayer);
+    } else {
+        // Si elle est décochée, on retire la couche de la carte
+        mymap.removeLayer(grLayer);
+    }
+});
 
