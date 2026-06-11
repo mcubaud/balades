@@ -35,9 +35,6 @@ var baseMaps = {
     "OpenStreetMap": osmLayer
 };
 
-// 4. Ajout du panneau de contrôle des couches en haut à droite de la carte
-var layerControl = L.control.layers(baseMaps, null, { position: 'topright' }).addTo(mymap);
-
 // (Conservez vos FeatureGroups existants juste en dessous)
 var LayersMarker = new L.FeatureGroup().addTo(mymap);
 
@@ -293,16 +290,7 @@ fetch("grs-de-france.geojson")
         console.error("Erreur lors du chargement des GR :", error);
     });
 
-// 3. Gestionnaire d'événement sur le Switch (Checkbox)
-document.getElementById("switch-gr").addEventListener("change", function(e) {
-    if (this.checked) {
-        // Si la case est cochée, on affiche la couche sur la carte
-        mymap.addLayer(grLayer);
-    } else {
-        // Si elle est décochée, on retire la couche de la carte
-        mymap.removeLayer(grLayer);
-    }
-});
+
 
 // Déclarez d'abord grLayer plus haut dans votre script, puis ajoutez-le aux "Overlays" du contrôle :
 var overlayMaps = {
