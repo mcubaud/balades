@@ -1,5 +1,47 @@
-///affichage de la carte
-var mymap = L.map('mapid').setView([46.875378329598036, 2.565228180873064], 6);
+
+/// --- CONFIGURATION DES FONDS DE CARTE ---
+
+// 1. Définition des différents fonds de carte (Base Layers)
+var osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    maxZoom: 22,
+    maxNativeZoom: 19
+});
+
+var planIgnLayer = L.tileLayer('https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2&STYLE=normal&FORMAT=image/png&TILEMATRIXSET=PM&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}', {
+    attribution: '&copy; <a href="https://www.ign.fr/" target="_blank">IGN</a>',
+    maxZoom: 22,
+    maxNativeZoom: 19
+});
+
+var orthoIgnLayer = L.tileLayer('https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=ORTHOIMAGERY.ORTHOPHOTOS&STYLE=normal&FORMAT=image/jpeg&TILEMATRIXSET=PM&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}', {
+    attribution: '&copy; <a href="https://www.ign.fr/" target="_blank">IGN</a>',
+    maxZoom: 22,
+    maxNativeZoom: 19
+});
+
+// 2. Initialisation de la carte avec le Plan IGN par défaut
+var mymap = L.map('mapid', {
+    center: [46.875378329598036, 2.565228180873064],
+    zoom: 6,
+    layers: [osmLayer] // Définit le fond de plan au démarrage (vous pouvez mettre osmLayer si préféré)
+});
+
+
+// 3. Création de l'objet regroupant les fonds disponibles pour le menu
+var baseMaps = {
+    "Plan IGN": planIgnLayer,
+    "Photos Aériennes (IGN)": orthoIgnLayer,
+    "OpenStreetMap": osmLayer
+};
+
+// 4. Ajout du panneau de contrôle des couches en haut à droite de la carte
+var layerControl = L.control.layers(baseMaps, null, { position: 'topright' }).addTo(mymap);
+
+// (Conservez vos FeatureGroups existants juste en dessous)
+var LayersMarker = new L.FeatureGroup().addTo(mymap);
+
+
 layer=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors', maxZoom: 22, maxNativeZoom :19,
 }).addTo(mymap);
@@ -93,45 +135,6 @@ promise2
     }
 })
 
-
-
-
-function couleur_par_type(marker,type){
-    var facteur=circle_radius/5.725
-    if(type=="Plaque de Nivellement") {
-        marker.setIcon(L.icon({iconUrl:"rn.png",iconSize: [facteur*40, facteur*40]}));
-    }else if(type=="Borne Géodésique") {
-        marker.setIcon(L.icon({iconUrl:"borne.png",iconSize: [facteur*29, facteur*34]}));
-    }else if(type=="Clou") {
-        marker.setIcon(L.icon({iconUrl:"clou.png",iconSize: [facteur*25, facteur*25]}));
-    }else if(type=="Cible") {
-        marker.setIcon(L.icon({iconUrl:"cible.jpg",iconSize: [facteur*25, facteur*25]}));
-    }else if(type=="Orgue") {
-        marker.setIcon(L.icon({iconUrl:"orgue.png",iconSize: [facteur*25, facteur*25]}));
-    }else if(type=="Géomètres sauvages et autres curiosités"){
-        marker.setIcon(L.icon({iconUrl:"geometre.png",iconSize: [facteur*30, facteur*30]}));
-    }else if(type=="Plaque de l'esplanade des Invalides"){
-        marker.setIcon(L.icon({iconUrl:"invalides.png",iconSize: [facteur*25, facteur*25]}));
-    }else if(type=="Autres Curiosités"){
-        marker.setIcon(L.icon({iconUrl:"ptInterro.png",iconSize: [facteur*25, facteur*25]}));
-    }
-}
-
-function couleur_par_nom(nom){
-    if(!( nom in liste_noms_couleurs)){
-        liste_noms_couleurs[nom]=couleur_aleatoire();
-    }
-    return liste_noms_couleurs[nom];
-}
-
-function couleur_aleatoire() {
-    var letters = '0123456789ABCDEF';
-    var color = '#';
-    for (var i = 0; i < 6; i++) {
-      color += letters[Math.floor(Math.random() * 16)];
-    }
-    return color;
-}  
 
 document.getElementById("localize").onclick=function(){
     mymap.locate({setView: true, maxZoom: 16});
@@ -301,3 +304,10 @@ document.getElementById("switch-gr").addEventListener("change", function(e) {
     }
 });
 
+// Déclarez d'abord grLayer plus haut dans votre script, puis ajoutez-le aux "Overlays" du contrôle :
+var overlayMaps = {
+    "Sentiers GR": grLayer
+};
+
+// Ajout du contrôle avec BaseMaps (boutons radio) ET OverlayMaps (cases à cocher)
+L.control.layers(baseMaps, overlayMaps, { position: 'topright' }).addTo(mymap);
