@@ -35,102 +35,64 @@ var baseMaps = {
     "OpenStreetMap": osmLayer
 };
 
-// (Conservez vos FeatureGroups existants juste en dessous)
-var LayersMarker = new L.FeatureGroup().addTo(mymap);
-
-
-layer=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors', maxZoom: 22, maxNativeZoom :19,
-}).addTo(mymap);
-
-
-var LayersMarker = new L.FeatureGroup().addTo(mymap);
 
 var liste_noms_couleurs={};
 
 var json_balades={};
 
-var promise0 = new Promise((resolve, reject) => {
-    fetch("balades.geojson")
+// --- CHARGEMENT DES BALADES ---
+fetch("balades.geojson")
     .then(r => r.json())
-    .then(r => {
-        json_balades = r;
-        promise = new Promise((resolve, reject) => {
-            resolve(json_balades);
-        });
-        resolve(r);
-    })
-});
-var target;
-var promise = promise0;
-promise
-.then(r => {
-    array = r.features
-    for(var i=0; i<array.length;i++){
-        var obj = array[i];
-        console.log(obj);
-        lnglats = obj.geometry.coordinates;
-        latlngs = lnglats[0].map(x => [x[1],x[0]])
-        try{
-            var polyline = L.polyline(latlngs, {color: 'black'}).addTo(mymap);
+    .then(data => {
+        json_balades = data;
+        var array = data.features;
+        for (var i = 0; i < array.length; i++) {
+            var obj = array[i];
+            var lnglats = obj.geometry.coordinates;
+            var latlngs = lnglats[0].map(x => [x[1], x[0]]);
+            
+            var polyline = L.polyline(latlngs, { color: 'black' }).addTo(mymap);
             polyline.bindPopup(`
-            <H3>${obj.properties.nom}</H3>
-            <p>${obj.properties.Date}</p>
-            <p>${obj.properties.Longueur}</p>
-            `)
-            polyline.addEventListener("click", function(e){
+                <h3>${obj.properties.nom}</h3>
+                <p>${obj.properties.Date}</p>
+                <p>${obj.properties.Longueur}</p>
+            `);
+            
+            polyline.addEventListener("click", function(e) {
                 target = e.target;
                 fade(target, 256);
                 target.openPopup();
-            })
-        }finally{
-
+            });
         }
-        
-    }
-})
+    })
+    .catch(err => console.error("Erreur balades:", err));
 
-function fade(polyline, i){
-    if(i>0){
-        let color_i = '#'+componentToHex(i)+'0000';
-        console.log(color_i);
-        polyline.setStyle({color: color_i});
-        setTimeout(x=>{fade(polyline, i-16)}, 100)
+function fade(polyline, i) {
+    if (i > 0) {
+        let color_i = '#' + componentToHex(i) + '0000';
+        polyline.setStyle({ color: color_i });
+        setTimeout(x => { fade(polyline, i - 16) }, 100);
     }
 }
 
-var promise1 = new Promise((resolve, reject) => {
-    fetch("rues_prises.geojson")
+// --- CHARGEMENT DES RUES PRISES ---
+fetch("rues_prises.geojson")
     .then(r => r.json())
-    .then(r => {
-        json_balades = r;
-        promise2 = new Promise((resolve, reject) => {
-            resolve(json_balades);
-        });
-        resolve(r);
-    })
-});
-var promise2 = promise1;
-promise2
-.then(r => {
-    var array = r.features
-    for(var i=0; i<array.length;i++){
-        var obj = array[i];
-        console.log(obj);
-        lnglats = obj.geometry.coordinates;
-        latlngs = lnglats.map(x => [x[1],x[0]])
-        try{
-            var polyline = L.polyline(latlngs, {color: 'black'}).addTo(mymap);
-            polyline.addEventListener("click", function(e){
+    .then(data => {
+        var array = data.features;
+        for (var i = 0; i < array.length; i++) {
+            var obj = array[i];
+            var lnglats = obj.geometry.coordinates;
+            var latlngs = lnglats.map(x => [x[1], x[0]]);
+            
+            var polyline = L.polyline(latlngs, { color: 'black' }).addTo(mymap);
+            polyline.addEventListener("click", function(e) {
                 target = e.target;
                 fade(target, 256);
-            })
-        }finally{
-
+            });
         }
-        
-    }
-})
+    })
+    .catch(err => console.error("Erreur rues prises:", err));
 
 
 document.getElementById("localize").onclick=function(){
@@ -169,7 +131,7 @@ inputVille.addEventListener('keydown', (e) => {
     }
 });
 
-document.getElementById("btn-recherche").onclick=chercher();
+document.getElementById("btn-recherche").onclick=chercher;
 
 
 function chercher(){
