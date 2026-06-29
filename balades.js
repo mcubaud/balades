@@ -38,32 +38,125 @@ var baseMaps = {
 
 var liste_noms_couleurs={};
 
-var json_balades={};
+// --- CONFIGURATION ET FILTRAGE DES BALADES ---
+var json_balades = {}
+var donneesBaladesGlobales = null;
 
-// --- CHARGEMENT DES BALADES ---
-fetch("balades.geojson")
-    .then(r => r.json())
-    .then(data => {
-        json_balades = data;
-        var array = data.features;
-        for (var i = 0; i < array.length; i++) {
-            var obj = array[i];
-            var lnglats = obj.geometry.coordinates;
-            var latlngs = lnglats[0].map(x => [x[1], x[0]]);
-            
-            var polyline = L.polyline(latlngs, { color: 'black' }).addTo(mymap);
-            polyline.bindPopup(`
-                <h3>${obj.properties.nom}</h3>
-                <p>${obj.properties.Date}</p>
-                <p>${obj.properties.Longueur}</p>
-            `);
-            
-            polyline.addEventListener("click", function(e) {
-                target = e.target;
-                fade(target, 256);
-                target.openPopup();
-            });
+// 1. Initialisation de la couche GeoJSON des balades avec son style par défaut
+var baladesLayer = L.geoJSON(null, {
+    style: {
+        color: 'black',
+        weight: 3
+    },
+    onEachFeature: function(feature, layer) {
+        // Ajout du popup
+        layer.bindPopup(`
+            <h3>${feature.properties.nom || 'Sans nom'}</h3>
+            <p><strong>Date :</strong> ${feature.properties.Date || 'Inconnue'}</p>
+            <p><strong>Longueur :</strong> ${feature.properties.Longueur || 'Inconnue'}</p>
+        `);
+        
+        // Gestion de l'effet de fondu au clic
+        layer.on("click", function(e) {
+            var target = e.target;
+            fade(target, 256);
+            target.openPopup();
+        });
+    }
+}).addTo(mymap); // On l'ajoute directement à la carte au démarrage
+
+// 2. Fonction principale de filtrage des balades
+function appliquerFiltreBalades() {
+    if (!donneesBaladesGlobales) return;
+
+    // Récupération des valeurs des inputs
+    var rechercheNom = document.getElementById('filtreBaladeNom').value.trim().toLowerCase();
+    
+    var longOp = document.getElementById('filtreBaladeLongOp').value;
+    var longVal = parseFloat(document.getElementById('filtreBaladeLongVal').value);
+    
+    var dateOp = document.getElementById('filtreBaladeDateOp').value;
+    var dateValHTML = document.getElementById('filtreBaladeDateVal').value; // Format AAAA-MM-JJ
+    var dateSeuil = dateValHTML ? new Date(dateValHTML) : null;
+
+    // On vide la couche actuelle
+    baladesLayer.clearLayers();
+
+    // Application du filtre multicritère
+    baladesLayer.options.filter = function(feature) {
+        var props = feature.properties || {};
+
+        // A. FILTRE PAR NOM
+        if (rechercheNom) {
+            var nom = props.nom ? props.nom.toLowerCase() : "";
+            if (!nom.includes(rechercheNom)) return false;
         }
+
+        // B. FILTRE PAR LONGUEUR
+        // Extraction du nombre depuis la chaîne (ex: "12.5 km" ou "7km" -> 12.5 ou 7)
+        if (longOp !== 'tous' && !isNaN(longVal)) {
+            var longueurStr = props.Longueur ? props.Longueur.toString() : "";
+            var longueurNum = parseFloat(longueurStr.replace(/[^\d.]/g, ''));
+            
+            if (!isNaN(longueurNum)) {
+                if (longOp === 'inf' && longueurNum >= longVal) return false;
+                if (longOp === 'sup' && longueurNum <= longVal) return false;
+            } else {
+                return false; // Si la balade n'a pas de longueur valide, on la masque
+            }
+        }
+
+        // C. FILTRE PAR DATE
+        if (dateOp !== 'tous' && dateSeuil) {
+            var dateStr = props.Date ? props.Date.toString() : ""; 
+            // Tente de parser la date du GeoJSON (gère les formats standards comme "2023-10-25" ou "10/25/2023")
+            // Note : Si vos dates sont au format français "JJ/MM/AAAA", il faudra un petit helper pour inverser.
+            var baladeDate = new Date(dateStr);
+
+            if (!isNaN(baladeDate.getTime())) {
+                if (dateOp === 'avant' && baladeDate >= dateSeuil) return false;
+                if (dateOp === 'apres' && baladeDate <= dateSeuil) return false;
+            } else {
+                return false; // Si date invalide ou manquante
+            }
+        }
+
+        return true; // La balade valide tous les critères
+    };
+
+    // On réinjecte les données filtrées
+    baladesLayer.addData(donneesBaladesGlobales);
+}
+
+// 3. Écouteurs d'événements pour filtrer en temps réel
+document.getElementById('filtreBaladeNom').addEventListener('keyup', appliquerFiltreBalades);
+document.getElementById('filtreBaladeLongOp').addEventListener('change', appliquerFiltreBalades);
+document.getElementById('filtreBaladeLongVal').addEventListener('input', appliquerFiltreBalades);
+document.getElementById('filtreBaladeDateOp').addEventListener('change', appliquerFiltreBalades);
+document.getElementById('filtreBaladeDateVal').addEventListener('change', appliquerFiltreBalades);
+
+// Bouton de réinitialisation complet
+document.getElementById('btn-reset-balades').onclick = function() {
+    document.getElementById('filtreBaladeNom').value = "";
+    document.getElementById('filtreBaladeLongOp').value = "tous";
+    document.getElementById('filtreBaladeLongVal').value = "";
+    document.getElementById('filtreBaladeDateOp').value = "tous";
+    document.getElementById('filtreBaladeDateVal').value = "";
+    appliquerFiltreBalades();
+};
+
+// 4. Chargement asynchrone des balades
+fetch("balades.geojson")
+    .then(r => {
+        if (!r.ok) throw new Error("Erreur de chargement de balades.geojson");
+        return r.json();
+    })
+    .then(data => {
+        json_balades = data; // Conserve votre ancienne variable globale au cas où
+        donneesBaladesGlobales = data; // Stockage pour notre filtre
+        
+        // Affichage initial
+        baladesLayer.addData(data);
     })
     .catch(err => console.error("Erreur balades:", err));
 
