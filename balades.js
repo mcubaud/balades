@@ -250,27 +250,36 @@ var grLayer = L.geoJSON(null, {
     }
 });
 
-// 3. Fonction de filtrage avancée (Regex avec \b)
+// 3. Fonction de filtrage robuste (gère "2", "GR2", "GR 2")
 function appliquerFiltreGR() {
     if (!donneesGRGlobales) return;
 
-    var recherche = document.getElementById('inputFiltreGR').value.trim();
+    var recherche = document.getElementById('inputFiltreGR').value.trim().toLowerCase();
     grLayer.clearLayers();
 
     grLayer.options.filter = function(feature) {
         if (!recherche) return true;
 
-        var nomGR = feature.properties && feature.properties.name ? feature.properties.name : "";
-        var refGR = feature.properties && feature.properties.ref ? feature.properties.ref : "";
-        
-        // Si la recherche est un nombre (ex: "2"), on cherche le nombre isolé grâce à \b
-        // Si c'est du texte (ex: "Bretagne"), on fait une recherche textuelle classique
-        if (!isNaN(recherche)) {
-            var regexStrict = new RegExp('\\b' + recherche + '\\b');
+        var nomGR = (feature.properties && feature.properties.name) ? feature.properties.name.toLowerCase() : "";
+        var refGR = (feature.properties && feature.properties.ref) ? feature.properties.ref.toLowerCase() : "";
+
+        // On extrait le numéro pur (ex: "2" depuis "2", "gr2" ou "gr 2")
+        var numeroRecherche = recherche.replace(/[^\d]/g, '');
+
+        if (numeroRecherche !== '') {
+            // Cette regex vérifie que le numéro trouvé est bien isolé des autres chiffres
+            // Elle valide "gr 2", "gr2", "2" mais rejette "gr 21", "21", "gr22"
+            var regexStrict = new RegExp('(?<!\\d)' + numeroRecherche + '(?!\\d)');
+            
+            // Si l'utilisateur a écrit "gr", on vérifie aussi la présence de "gr"
+            if (recherche.includes('gr')) {
+                return (nomGR.includes('gr') && regexStrict.test(nomGR)) || 
+                       (refGR.includes('gr') && regexStrict.test(refGR));
+            }
             return regexStrict.test(nomGR) || regexStrict.test(refGR);
         } else {
-            var rechercheMinuscule = recherche.toLowerCase();
-            return nomGR.toLowerCase().includes(rechercheMinuscule) || refGR.toLowerCase().includes(rechercheMinuscule);
+            // Recherche textuelle classique si aucun chiffre n'est saisi (ex: "bretagne")
+            return nomGR.includes(recherche) || refGR.includes(recherche);
         }
     };
 
@@ -296,38 +305,38 @@ var overlayMaps = {
     "Sentiers GR": grLayer
 };
 
-// On stocke le contrôle des calques dans une variable
+// Création du contrôle
 var menuCouches = L.control.layers(baseMaps, overlayMaps, { position: 'topright' }).addTo(mymap);
 
-// Injection dynamique du champ de filtrage directement dans le Control Layer de Leaflet
+// Injection au bon endroit dans le DOM de Leaflet
 (function integrerFiltreDansMenu() {
-    // On récupère le conteneur HTML créé par Leaflet pour ce menu
     var conteneurMenu = menuCouches.getContainer();
     
-    // On crée un conteneur pour notre filtre
-    var filtreContainer = L.DomUtil.create('div', 'leaflet-control-layers-filter', conteneurMenu);
-    filtreContainer.style.marginTop = '8px';
-    filtreContainer.style.borderTop = '1px solid #ccc';
-    filtreContainer.style.paddingTop = '6px';
+    // CORRECTION : On cible la liste interne pour que le filtre s'efface/s'affiche en même temps que le menu
+    var listeInterne = conteneurMenu.querySelector('.leaflet-control-layers-list');
     
-    // Création de l'input de recherche
-    var inputHTML = document.createElement('input');
-    inputHTML.type = 'text';
-    inputHTML.id = 'inputFiltreGR';
-    inputHTML.placeholder = 'Filtrer GR (ex: 2, 34, Corse...)';
-    inputHTML.style.width = '100%';
-    inputHTML.style.boxSizing = 'border-box';
-    inputHTML.style.padding = '4px';
-    inputHTML.style.fontSize = '12px';
-    
-    filtreContainer.appendChild(inputHTML);
-    
-    // Événement pour filtrer en temps réel
-    inputHTML.addEventListener('keyup', appliquerFiltreGR);
-    
-    // Désactiver la propagation des clics et du scroll sur l'input pour éviter que la carte ne bouge en arrière-plan
-    L.DomEvent.disableClickPropagation(inputHTML);
-    L.DomEvent.disableScrollPropagation(inputHTML);
+    if (listeInterne) {
+        var filtreContainer = L.DomUtil.create('div', 'leaflet-control-layers-filter', listeInterne);
+        filtreContainer.style.marginTop = '10px';
+        filtreContainer.style.borderTop = '1px solid #ccc';
+        filtreContainer.style.paddingTop = '8px';
+        
+        var inputHTML = document.createElement('input');
+        inputHTML.type = 'text';
+        inputHTML.id = 'inputFiltreGR';
+        inputHTML.placeholder = 'Filtrer les GR...';
+        inputHTML.style.width = '100%';
+        inputHTML.style.boxSizing = 'border-box';
+        inputHTML.style.padding = '4px';
+        inputHTML.style.fontSize = '12px';
+        
+        filtreContainer.appendChild(inputHTML);
+        
+        inputHTML.addEventListener('keyup', appliquerFiltreGR);
+        
+        L.DomEvent.disableClickPropagation(inputHTML);
+        L.DomEvent.disableScrollPropagation(inputHTML);
+    }
 })();
 
 
