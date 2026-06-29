@@ -339,11 +339,3 @@ var menuCouches = L.control.layers(baseMaps, overlayMaps, { position: 'topright'
     }
 })();
 
-
-// Déclarez d'abord grLayer plus haut dans votre script, puis ajoutez-le aux "Overlays" du contrôle :
-var overlayMaps = {
-    "Sentiers GR": grLayer
-};
-
-// Ajout du contrôle avec BaseMaps (boutons radio) ET OverlayMaps (cases à cocher)
-L.control.layers(baseMaps, overlayMaps, { position: 'topright' }).addTo(mymap);
