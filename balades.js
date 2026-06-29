@@ -227,10 +227,15 @@ mymap.on('locationerror', onLocationError);
 mymap.createPane('grPane');
 mymap.getPane('grPane').style.zIndex = 350;
 
-// Variable globale pour stocker l'intégralité des données GeoJSON des GR
+// --- CONFIGURATION ET FILTRAGE DES GR ---
+
+// 1. Création du volet d'affichage dédié aux GR
+mymap.createPane('grPane');
+mymap.getPane('grPane').style.zIndex = 350;
+
 var donneesGRGlobales = null;
 
-// 2. Initialisation de la couche GeoJSON vide avec son style
+// 2. Initialisation de la couche GeoJSON vide
 var grLayer = L.geoJSON(null, {
     pane: 'grPane',
     style: {
@@ -245,64 +250,85 @@ var grLayer = L.geoJSON(null, {
     }
 });
 
-// 3. Fonction principale de filtrage
+// 3. Fonction de filtrage avancée (Regex avec \b)
 function appliquerFiltreGR() {
-    // Si les données ne sont pas encore chargées, on ne fait rien
     if (!donneesGRGlobales) return;
 
-    // Récupération de la valeur saisie (en minuscules et sans espaces superflus)
-    var recherche = document.getElementById('inputFiltreGR').value.toLowerCase().trim();
-
-    // Vider la couche actuelle sur la carte
+    var recherche = document.getElementById('inputFiltreGR').value.trim();
     grLayer.clearLayers();
 
-    // Appliquer le filtre et réinjecter les données correspondantes
     grLayer.options.filter = function(feature) {
-        if (!recherche) return true; // Si le champ est vide, on affiche tout
+        if (!recherche) return true;
 
-        var nomGR = feature.properties && feature.properties.name ? feature.properties.name.toLowerCase() : "";
+        var nomGR = feature.properties && feature.properties.name ? feature.properties.name : "";
+        var refGR = feature.properties && feature.properties.ref ? feature.properties.ref : "";
         
-        // Optionnel : si votre GeoJSON possède une propriété "ref" ou "numero" spécifique (ex: "GR 20"), 
-        // vous pouvez l'ajouter ici pour améliorer la précision de la recherche.
-        var refGR = feature.properties && feature.properties.ref ? feature.properties.ref.toLowerCase() : "";
-
-        return nomGR.includes(recherche) || refGR.includes(recherche);
+        // Si la recherche est un nombre (ex: "2"), on cherche le nombre isolé grâce à \b
+        // Si c'est du texte (ex: "Bretagne"), on fait une recherche textuelle classique
+        if (!isNaN(recherche)) {
+            var regexStrict = new RegExp('\\b' + recherche + '\\b');
+            return regexStrict.test(nomGR) || regexStrict.test(refGR);
+        } else {
+            var rechercheMinuscule = recherche.toLowerCase();
+            return nomGR.toLowerCase().includes(rechercheMinuscule) || refGR.toLowerCase().includes(rechercheMinuscule);
+        }
     };
 
-    // Recharger les données filtrées dans la couche
     grLayer.addData(donneesGRGlobales);
 }
 
-// 4. Événements sur les éléments HTML
-var inputFiltre = document.getElementById('inputFiltreGR');
-
-// Filtrer à chaque touche relâchée (recherche dynamique au clavier)
-inputFiltre.addEventListener('keyup', appliquerFiltreGR);
-
-// Bouton pour réinitialiser le filtre rapidement
-document.getElementById('btn-reinitialiser-gr').onclick = function() {
-    inputFiltre.value = "";
-    appliquerFiltreGR();
-};
-
-// 5. Chargement asynchrone initial du fichier GeoJSON
+// 4. Chargement initial du GeoJSON
 fetch("grs-de-france.geojson")
     .then(response => {
-        if (!response.ok) {
-            throw new Error("Impossible de récupérer le fichier grs-de-france.geojson");
-        }
+        if (!response.ok) throw new Error("Impossible de récupérer le fichier grs-de-france.geojson");
         return response.json();
     })
     .then(data => {
-        // Sauvegarde des données complètes pour les filtres futurs
         donneesGRGlobales = data;
-        
-        // Affichage initial (tout est visible)
         grLayer.addData(data);
     })
-    .catch(error => {
-        console.error("Erreur lors du chargement des GR :", error);
-    });
+    .catch(error => console.error("Erreur lors du chargement des GR :", error));
+
+
+// --- GESTION DU MENU LEAFLET ET INJECTION DU FILTRE ---
+
+var overlayMaps = {
+    "Sentiers GR": grLayer
+};
+
+// On stocke le contrôle des calques dans une variable
+var menuCouches = L.control.layers(baseMaps, overlayMaps, { position: 'topright' }).addTo(mymap);
+
+// Injection dynamique du champ de filtrage directement dans le Control Layer de Leaflet
+(function integrerFiltreDansMenu() {
+    // On récupère le conteneur HTML créé par Leaflet pour ce menu
+    var conteneurMenu = menuCouches.getContainer();
+    
+    // On crée un conteneur pour notre filtre
+    var filtreContainer = L.DomUtil.create('div', 'leaflet-control-layers-filter', conteneurMenu);
+    filtreContainer.style.marginTop = '8px';
+    filtreContainer.style.borderTop = '1px solid #ccc';
+    filtreContainer.style.paddingTop = '6px';
+    
+    // Création de l'input de recherche
+    var inputHTML = document.createElement('input');
+    inputHTML.type = 'text';
+    inputHTML.id = 'inputFiltreGR';
+    inputHTML.placeholder = 'Filtrer GR (ex: 2, 34, Corse...)';
+    inputHTML.style.width = '100%';
+    inputHTML.style.boxSizing = 'border-box';
+    inputHTML.style.padding = '4px';
+    inputHTML.style.fontSize = '12px';
+    
+    filtreContainer.appendChild(inputHTML);
+    
+    // Événement pour filtrer en temps réel
+    inputHTML.addEventListener('keyup', appliquerFiltreGR);
+    
+    // Désactiver la propagation des clics et du scroll sur l'input pour éviter que la carte ne bouge en arrière-plan
+    L.DomEvent.disableClickPropagation(inputHTML);
+    L.DomEvent.disableScrollPropagation(inputHTML);
+})();
 
 
 // Déclarez d'abord grLayer plus haut dans votre script, puis ajoutez-le aux "Overlays" du contrôle :
