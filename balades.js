@@ -221,13 +221,16 @@ function onLocationError(e) {
 
 mymap.on('locationerror', onLocationError);
 
-// 1. Création d'un volet d'affichage dédié aux GR
+// --- CONFIGURATION ET FILTRAGE DES GR ---
+
+// 1. Création du volet d'affichage dédié aux GR
 mymap.createPane('grPane');
-// 2. On le place à 350 (le fond de carte est à 200, et vos autres polylines à 400)
 mymap.getPane('grPane').style.zIndex = 350;
 
+// Variable globale pour stocker l'intégralité des données GeoJSON des GR
+var donneesGRGlobales = null;
 
-
+// 2. Initialisation de la couche GeoJSON vide avec son style
 var grLayer = L.geoJSON(null, {
     pane: 'grPane',
     style: {
@@ -236,15 +239,53 @@ var grLayer = L.geoJSON(null, {
         opacity: 0.85
     },
     onEachFeature: function(feature, layer) {
-        // Si la propriété "name" existe, on lie un Popup
         if (feature.properties && feature.properties.name) {
             layer.bindPopup(`<strong>${feature.properties.name}</strong>`);
         }
     }
 });
 
+// 3. Fonction principale de filtrage
+function appliquerFiltreGR() {
+    // Si les données ne sont pas encore chargées, on ne fait rien
+    if (!donneesGRGlobales) return;
 
-// 3. Chargement asynchrone du fichier GeoJSON
+    // Récupération de la valeur saisie (en minuscules et sans espaces superflus)
+    var recherche = document.getElementById('inputFiltreGR').value.toLowerCase().trim();
+
+    // Vider la couche actuelle sur la carte
+    grLayer.clearLayers();
+
+    // Appliquer le filtre et réinjecter les données correspondantes
+    grLayer.options.filter = function(feature) {
+        if (!recherche) return true; // Si le champ est vide, on affiche tout
+
+        var nomGR = feature.properties && feature.properties.name ? feature.properties.name.toLowerCase() : "";
+        
+        // Optionnel : si votre GeoJSON possède une propriété "ref" ou "numero" spécifique (ex: "GR 20"), 
+        // vous pouvez l'ajouter ici pour améliorer la précision de la recherche.
+        var refGR = feature.properties && feature.properties.ref ? feature.properties.ref.toLowerCase() : "";
+
+        return nomGR.includes(recherche) || refGR.includes(recherche);
+    };
+
+    // Recharger les données filtrées dans la couche
+    grLayer.addData(donneesGRGlobales);
+}
+
+// 4. Événements sur les éléments HTML
+var inputFiltre = document.getElementById('inputFiltreGR');
+
+// Filtrer à chaque touche relâchée (recherche dynamique au clavier)
+inputFiltre.addEventListener('keyup', appliquerFiltreGR);
+
+// Bouton pour réinitialiser le filtre rapidement
+document.getElementById('btn-reinitialiser-gr').onclick = function() {
+    inputFiltre.value = "";
+    appliquerFiltreGR();
+};
+
+// 5. Chargement asynchrone initial du fichier GeoJSON
 fetch("grs-de-france.geojson")
     .then(response => {
         if (!response.ok) {
@@ -253,13 +294,15 @@ fetch("grs-de-france.geojson")
         return response.json();
     })
     .then(data => {
+        // Sauvegarde des données complètes pour les filtres futurs
+        donneesGRGlobales = data;
+        
+        // Affichage initial (tout est visible)
         grLayer.addData(data);
-
     })
     .catch(error => {
         console.error("Erreur lors du chargement des GR :", error);
     });
-
 
 
 // Déclarez d'abord grLayer plus haut dans votre script, puis ajoutez-le aux "Overlays" du contrôle :
