@@ -47,7 +47,27 @@
         <input type="text" placeholder="Adresse" class="form-control form-control-sm" id="inputAdresse" name="adresse">
         <button id="btn-recherche" type="button" class="btn btn-secondary  btn-shadow">Rechercher</button>
       </div>
-      
+      <div id="filtres-balades-container" style="margin: 10px 0; padding: 10px; border: 1px solid #ccc; background: #f9f9f9; border-radius: 4px;">
+          <h4>Filtrer les balades</h4>
+          
+          <input type="text" id="filtreBaladeNom" placeholder="Nom de la balade..." style="margin-right: 5px;" />
+          
+          <select id="filtreBaladeLongOp" style="margin-right: 5px;">
+              <option value="tous">Toutes les longueurs</option>
+              <option value="inf">Longueur inférieure à (<)</option>
+              <option value="sup">Longueur supérieure à (>)</option>
+          </select>
+          <input type="number" id="filtreBaladeLongVal" placeholder="km" style="width: 60px; margin-right: 10px;" />
+
+          <select id="filtreBaladeDateOp" style="margin-right: 5px;">
+              <option value="tous">Toutes les dates</option>
+              <option value="avant">Avant le</option>
+              <option value="apres">Après le</option>
+          </select>
+          <input type="date" id="filtreBaladeDateVal" style="margin-right: 10px;" />
+
+          <button id="btn-reset-balades" type="button">Réinitialiser</button>
+      </div>
     </div>
     <div></div>
   </div>
