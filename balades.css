@@ -318,6 +318,7 @@ canvas{
     background-repeat: no-repeat;
     margin: 2px;
     padding: 2px;
+    margin-right: 40px;
 }
 #localize{
     background-image: url("loc.png");
